@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Custom Action on Button Click with Detailed Count
 // @namespace    http://tampermonkey.net/
-// @version      1.10
+// @version      1.11
 // @description  Add custom actions to button clicks on the webpage, keeping track of positive, blocked, and negative test counts separately, and exporting daily totals to CSV.
 // @author       You
 // @match        https://testlinkmt.apator.com/lib/execute/execSetResults.php*
