@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Custom Action on Button Click with Count
+// @name         Custom Action on Button Click with Detailed Count
 // @namespace    http://tampermonkey.net/
-// @version      1.9
-// @description  Add custom actions to button clicks on the webpage and keep track of click count, with option to save results to CSV, including "dlms-xxxx" value, and reset counter on next day or manually reset local storage, and extract URL parameters, with confirmation to reset local storage
+// @version      1.10
+// @description  Add custom actions to button clicks on the webpage, keeping track of positive, blocked, and negative test counts separately, and exporting daily totals to CSV.
 // @author       You
 // @match        https://testlinkmt.apator.com/lib/execute/execSetResults.php*
 // @grant        none
@@ -19,9 +19,11 @@
             const dlmsValue = extractDlmsValue();
             const urlParams = extractUrlParams();
 
-            const clickCount = incrementClickCount(status, testId, dlmsValue, urlParams);
+            incrementClickCount(status, testId, dlmsValue, urlParams);
 
-            alert(`Testy wykonane dzisiaj (${status}): ${clickCount}`);
+            const { positiveCount, blockedCount, negativeCount } = getCountsForToday();
+
+            alert(`Testy wykonane dzisiaj:\n- Pozytywne: ${positiveCount}\n- Zablokowane: ${blockedCount}\n- Negatywne: ${negativeCount}`);
         });
     }
 
@@ -55,17 +57,22 @@
         const lastDate = localStorage.getItem(lastDateKey);
         if (lastDate !== today) {
             localStorage.setItem(lastDateKey, today);
-            localStorage.setItem('totalClickCount', 0);
+            localStorage.setItem('positiveCount', 0);
+            localStorage.setItem('blockedCount', 0);
+            localStorage.setItem('negativeCount', 0);
         }
 
-        let totalClickCount = parseInt(localStorage.getItem('totalClickCount')) || 0;
-        totalClickCount++;
-        localStorage.setItem('totalClickCount', totalClickCount);
+        const statusKeyMap = {
+            p: 'positiveCount',
+            b: 'blockedCount',
+            f: 'negativeCount'
+        };
+        const currentCount = parseInt(localStorage.getItem(statusKeyMap[status])) || 0;
+        localStorage.setItem(statusKeyMap[status], currentCount + 1);
 
         const clickDetailsKey = `clickDetails_${datetime}_${status}_${testId}`;
         localStorage.setItem(clickDetailsKey, JSON.stringify({
             datetime,
-            tests_today: totalClickCount,
             status,
             testId,
             dlmsValue,
@@ -74,9 +81,14 @@
             tplan_id: urlParams.tplan_id,
             setting_build: urlParams.setting_build
         }));
+    }
 
-        console.log(`Testy dnia ${today}: ${totalClickCount}`);
-        return totalClickCount;
+    function getCountsForToday() {
+        return {
+            positiveCount: parseInt(localStorage.getItem('positiveCount')) || 0,
+            blockedCount: parseInt(localStorage.getItem('blockedCount')) || 0,
+            negativeCount: parseInt(localStorage.getItem('negativeCount')) || 0
+        };
     }
 
     function generateCSV() {
@@ -84,11 +96,16 @@
         const today = new Date().toISOString().split('T')[0];
         const clickDetailsArray = [];
 
+        // Calculate today's total test count by summing up all statuses
+        const counts = getCountsForToday();
+        const testsTodayCount = counts.positiveCount + counts.blockedCount + counts.negativeCount;
+
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key.startsWith('clickDetails_')) {
                 const clickDetails = JSON.parse(localStorage.getItem(key));
                 if (clickDetails.datetime.startsWith(today)) {
+                    clickDetails.tests_today = testsTodayCount; // Add today's test count to each entry
                     clickDetailsArray.push(clickDetails);
                 }
             }
