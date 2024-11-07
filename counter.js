@@ -48,7 +48,7 @@
 
     function incrementClickCount(status, testId, dlmsValue, urlParams) {
         const now = new Date();
-        const today = now.toISOString().split('T')[0];
+        const today = now.toLocaleDateString('en-CA').split('T')[0];
 
         const lastDateKey = 'lastDate';
         const lastDate = localStorage.getItem(lastDateKey);
@@ -68,10 +68,10 @@
         localStorage.setItem(statusKeyMap[status], currentCount + 1);
 
         // Save detailed click data with the current counts
-        const clickDetailsKey = `clickDetails_${now.toISOString()}_${status}_${testId}`;
+        const clickDetailsKey = `clickDetails_${now.toLocaleDateString('en-CA')}_${status}_${testId}`;
         const counts = getCountsForToday();
         localStorage.setItem(clickDetailsKey, JSON.stringify({
-            datetime: now.toISOString(),
+            datetime: now.toLocaleDateString('en-CA'),
             tests_today: counts.positiveCount + counts.blockedCount + counts.negativeCount,
             status,
             dlmsValue,
@@ -125,7 +125,7 @@
 
     function generateCSV() {
         const csvRows = ['datetime;tests_today;status;dlms_value;test_id;version_id;id;tplan_id;setting_build'];
-        const today = new Date().toISOString().split('T')[0];
+        const today = new Date().toLocaleDateString('en-CA').split('T')[0];
         const clickDetailsArray = [];
 
         // Iterate through local storage to collect click details for today
