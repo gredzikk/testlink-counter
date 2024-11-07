@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Custom Action on Button Click with Detailed Count and CSV Download
 // @namespace    http://tampermonkey.net/
-// @version      1.16
+// @version      1.17
 // @description  Display detailed count of positive, blocked, and negative tests in the bottom right corner, with CSV download and local storage reset options.
 // @author       You
 // @match        https://testlinkmt.apator.com/lib/execute/execSetResults.php*
@@ -125,7 +125,7 @@
 
     function generateCSV() {
         const csvRows = ['datetime;tests_today;status;dlms_value;test_id;version_id;id;tplan_id;setting_build'];
-        const today = new Date().toLocaleDateString('en-CA').split('T')[0];
+        const today = new Date().toLocaleDateString('en-CA');
         const clickDetailsArray = [];
 
         // Iterate through local storage to collect click details for today
