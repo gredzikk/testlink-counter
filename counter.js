@@ -1,14 +1,12 @@
 // ==UserScript==
 // @name         Custom Action on Button Click with Detailed Count
 // @namespace    http://tampermonkey.net/
-// @version      1.13
-// @description  Add custom actions to button clicks on the webpage, keeping track of positive, blocked, and negative test counts separately, and exporting daily totals to CSV.
+// @version      1.11
+// @description  Display detailed count of positive, blocked, and negative tests in the bottom right corner of the page, updated on each click.
 // @author       You
 // @match        https://testlinkmt.apator.com/lib/execute/execSetResults.php*
 // @grant        none
 // ==/UserScript==
-
-//GEJ GEJ NIGGER GEJ
 
 (function() {
     'use strict';
@@ -23,9 +21,7 @@
 
             incrementClickCount(status, testId, dlmsValue, urlParams);
 
-            const { positiveCount, blockedCount, negativeCount } = getCountsForToday();
-
-            alert(`Testy wykonane dzisiaj:\n- Pozytywne: ${positiveCount}\n- Zablokowane: ${blockedCount}\n- Negatywne: ${negativeCount}`);
+            updateTestCountDisplay();
         });
     }
 
@@ -53,7 +49,6 @@
     function incrementClickCount(status, testId, dlmsValue, urlParams) {
         const now = new Date();
         const today = now.toISOString().split('T')[0];
-        const datetime = now.toISOString();
 
         const lastDateKey = 'lastDate';
         const lastDate = localStorage.getItem(lastDateKey);
@@ -71,18 +66,6 @@
         };
         const currentCount = parseInt(localStorage.getItem(statusKeyMap[status])) || 0;
         localStorage.setItem(statusKeyMap[status], currentCount + 1);
-
-        const clickDetailsKey = `clickDetails_${datetime}_${status}_${testId}`;
-        localStorage.setItem(clickDetailsKey, JSON.stringify({
-            datetime,
-            status,
-            testId,
-            dlmsValue,
-            version_id: urlParams.version_id,
-            id: urlParams.id,
-            tplan_id: urlParams.tplan_id,
-            setting_build: urlParams.setting_build
-        }));
     }
 
     function getCountsForToday() {
@@ -93,53 +76,36 @@
         };
     }
 
-    function generateCSV() {
-        const csvRows = ['datetime;tests_today;status;dlms_value;test_id;version_id;id;tplan_id;setting_build'];
-        const today = new Date().toISOString().split('T')[0];
-        const clickDetailsArray = [];
-
-        // Calculate today's total test count by summing up all statuses
+    function updateTestCountDisplay() {
         const counts = getCountsForToday();
-        const testsTodayCount = counts.positiveCount + counts.blockedCount + counts.negativeCount;
 
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key.startsWith('clickDetails_')) {
-                const clickDetails = JSON.parse(localStorage.getItem(key));
-                if (clickDetails.datetime.startsWith(today)) {
-                    clickDetails.tests_today = testsTodayCount; // Add today's test count to each entry
-                    clickDetailsArray.push(clickDetails);
-                }
-            }
-        }
-
-        clickDetailsArray.sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
-
-        clickDetailsArray.forEach(clickDetails => {
-            csvRows.push(`${clickDetails.datetime};${clickDetails.tests_today};${clickDetails.status};${clickDetails.dlmsValue};${clickDetails.testId};${clickDetails.version_id};${clickDetails.id};${clickDetails.tplan_id};${clickDetails.setting_build}`);
-        });
-
-        const csvContent = csvRows.join('\n');
-        downloadCSV(csvContent);
+        const testCountDisplay = document.getElementById('testCountDisplay');
+        testCountDisplay.innerHTML = `
+            <b>Wykonania testów dzisiaj:</b><br>
+            - Pozytywne: ${counts.positiveCount}<br>
+            - Zablokowane: ${counts.blockedCount}<br>
+            - Negatywne: ${counts.negativeCount}
+        `;
     }
 
-    function downloadCSV(csvContent) {
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'wykonania_testow.csv';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
+    function createTestCountDisplay() {
+        const displayDiv = document.createElement('div');
+        displayDiv.id = 'testCountDisplay';
+        displayDiv.style.position = 'fixed';
+        displayDiv.style.bottom = '10px';
+        displayDiv.style.right = '10px';
+        displayDiv.style.padding = '15px';
+        displayDiv.style.backgroundColor = '#f9f9f9';
+        displayDiv.style.border = '1px solid #ddd';
+        displayDiv.style.borderRadius = '8px';
+        displayDiv.style.boxShadow = '0px 4px 8px rgba(0, 0, 0, 0.1)';
+        displayDiv.style.fontSize = '14px';
+        displayDiv.style.zIndex = '1000';
+        displayDiv.style.color = '#333';
 
-    function clearLocalStorage() {
-        if (confirm('Na pewno chcesz usunąć pamięć podręczną? Akcja jest nieodwracalna.')) {
-            localStorage.clear();
-            alert('Pamięć podręczna została wyczyszczona.');
-        }
+        document.body.appendChild(displayDiv);
+
+        updateTestCountDisplay();
     }
 
     function addDownloadButton() {
@@ -194,9 +160,18 @@
         });
     }
 
+    function clearLocalStorage() {
+        if (confirm('Na pewno chcesz usunąć pamięć podręczną? Akcja jest nieodwracalna.')) {
+            localStorage.clear();
+            alert('Pamięć podręczna została wyczyszczona.');
+            updateTestCountDisplay();  // Update display after clearing
+        }
+    }
+
     const buttons = document.querySelectorAll('img[id^="fastExec"]');
     buttons.forEach(addCustomAction);
 
+    createTestCountDisplay();  // Create the test count display panel
     addDownloadButton();
     addClearButton();
 })();
