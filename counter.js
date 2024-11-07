@@ -8,7 +8,7 @@
 // @grant        none
 // ==/UserScript==
 
-//GEJ GEJ
+//GEJ GEJ NIGGER GEJ
 
 (function() {
     'use strict';
