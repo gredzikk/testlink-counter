@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Custom Action on Button Click with Detailed Count
+// @name         Custom Action on Button Click with Detailed Count and CSV Download
 // @namespace    http://tampermonkey.net/
-// @version      1.11
-// @description  Display detailed count of positive, blocked, and negative tests in the bottom right corner of the page, updated on each click.
+// @version      1.15
+// @description  Display detailed count of positive, blocked, and negative tests in the bottom right corner, with CSV download and local storage reset options.
 // @author       You
 // @match        https://testlinkmt.apator.com/lib/execute/execSetResults.php*
 // @grant        none
@@ -66,6 +66,21 @@
         };
         const currentCount = parseInt(localStorage.getItem(statusKeyMap[status])) || 0;
         localStorage.setItem(statusKeyMap[status], currentCount + 1);
+
+        // Save detailed click data with the current counts
+        const clickDetailsKey = `clickDetails_${now.toISOString()}_${status}_${testId}`;
+        const counts = getCountsForToday();
+        localStorage.setItem(clickDetailsKey, JSON.stringify({
+            datetime: now.toISOString(),
+            tests_today: counts.positiveCount + counts.blockedCount + counts.negativeCount,
+            status,
+            dlmsValue,
+            testId,
+            version_id: urlParams.version_id,
+            id: urlParams.id,
+            tplan_id: urlParams.tplan_id,
+            setting_build: urlParams.setting_build
+        }));
     }
 
     function getCountsForToday() {
@@ -108,6 +123,54 @@
         updateTestCountDisplay();
     }
 
+    function generateCSV() {
+        const csvRows = ['datetime;tests_today;status;dlms_value;test_id;version_id;id;tplan_id;setting_build'];
+        const today = new Date().toISOString().split('T')[0];
+        const clickDetailsArray = [];
+
+        // Iterate through local storage to collect click details for today
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('clickDetails_')) {
+                const clickDetails = JSON.parse(localStorage.getItem(key));
+                if (clickDetails.datetime.startsWith(today)) {
+                    clickDetailsArray.push(clickDetails);
+                }
+            }
+        }
+
+        clickDetailsArray.sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+
+        // Prepare CSV rows with the sum of all tests today (positive, blocked, negative)
+        clickDetailsArray.forEach(clickDetails => {
+            const counts = getCountsForToday();  // Get updated counts for today
+            csvRows.push(`${clickDetails.datetime};${counts.positiveCount + counts.blockedCount + counts.negativeCount};${clickDetails.status};${clickDetails.dlmsValue};${clickDetails.testId};${clickDetails.version_id};${clickDetails.id};${clickDetails.tplan_id};${clickDetails.setting_build}`);
+        });
+
+        const csvContent = csvRows.join('\n');
+        downloadCSV(csvContent);
+    }
+
+    function downloadCSV(csvContent) {
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'wykonania_testow.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function clearLocalStorage() {
+        if (confirm('Na pewno chcesz usunąć pamięć podręczną? Akcja jest nieodwracalna.')) {
+            localStorage.clear();
+            alert('Pamięć podręczną została wyczyszczona.');
+            updateTestCountDisplay();  // Update display after clearing
+        }
+    }
+
     function addDownloadButton() {
         const button = document.createElement('button');
         button.textContent = 'Pobierz dzisiejsze wykonania';
@@ -116,7 +179,7 @@
         button.style.left = '10px';
         button.style.padding = '10px 20px';
         button.style.backgroundColor = '#4CAF50';
-        button.style.color = 'green';
+        button.style.color = 'white';
         button.style.border = 'none';
         button.style.borderRadius = '5px';
         button.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
@@ -125,13 +188,6 @@
         button.style.zIndex = '1000';
         button.addEventListener('click', generateCSV);
         document.body.appendChild(button);
-
-        button.addEventListener('mouseover', function() {
-            button.style.backgroundColor = '#45a049';
-        });
-        button.addEventListener('mouseout', function() {
-            button.style.backgroundColor = '#4CAF50';
-        });
     }
 
     function addClearButton() {
@@ -142,7 +198,7 @@
         button.style.left = '10px';
         button.style.padding = '10px 20px';
         button.style.backgroundColor = '#f44336';
-        button.style.color = 'red';
+        button.style.color = 'white';
         button.style.border = 'none';
         button.style.borderRadius = '5px';
         button.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
@@ -151,27 +207,13 @@
         button.style.zIndex = '1000';
         button.addEventListener('click', clearLocalStorage);
         document.body.appendChild(button);
-
-        button.addEventListener('mouseover', function() {
-            button.style.backgroundColor = '#e53935';
-        });
-        button.addEventListener('mouseout', function() {
-            button.style.backgroundColor = '#f44336';
-        });
     }
 
-    function clearLocalStorage() {
-        if (confirm('Na pewno chcesz usunąć pamięć podręczną? Akcja jest nieodwracalna.')) {
-            localStorage.clear();
-            alert('Pamięć podręczna została wyczyszczona.');
-            updateTestCountDisplay();  // Update display after clearing
-        }
-    }
-
+    // Add buttons for CSV download and local storage reset with styles
     const buttons = document.querySelectorAll('img[id^="fastExec"]');
     buttons.forEach(addCustomAction);
 
     createTestCountDisplay();  // Create the test count display panel
-    addDownloadButton();
-    addClearButton();
+    addDownloadButton();       // Add CSV download button
+    addClearButton();          // Add clear local storage button
 })();
