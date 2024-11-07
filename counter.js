@@ -178,9 +178,9 @@
         button.style.bottom = '50px';
         button.style.left = '10px';
         button.style.padding = '10px 20px';
-        button.style.backgroundColor = '#4CAF50';
-        button.style.color = 'white';
-        button.style.border = 'none';
+        button.style.backgroundColor = 'white';  // White background
+        button.style.color = 'black';  // Black text
+        button.style.border = '1px solid #ddd';  // Border
         button.style.borderRadius = '5px';
         button.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
         button.style.cursor = 'pointer';
@@ -197,9 +197,9 @@
         button.style.bottom = '10px';
         button.style.left = '10px';
         button.style.padding = '10px 20px';
-        button.style.backgroundColor = '#f44336';
-        button.style.color = 'white';
-        button.style.border = 'none';
+        button.style.backgroundColor = 'white';  // White background
+        button.style.color = 'black';  // Black text
+        button.style.border = '1px solid #ddd';  // Border
         button.style.borderRadius = '5px';
         button.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
         button.style.cursor = 'pointer';
@@ -209,7 +209,6 @@
         document.body.appendChild(button);
     }
 
-    // Add buttons for CSV download and local storage reset with styles
     const buttons = document.querySelectorAll('img[id^="fastExec"]');
     buttons.forEach(addCustomAction);
 
