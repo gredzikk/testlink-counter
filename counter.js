@@ -11,7 +11,6 @@
 (function() {
     'use strict';
 
-    // Function to add custom action
     function addCustomAction(button) {
         button.addEventListener('click', function() {
             const testId = button.name.match(/\d+/)[0];
@@ -67,7 +66,6 @@
         const currentCount = parseInt(localStorage.getItem(statusKeyMap[status])) || 0;
         localStorage.setItem(statusKeyMap[status], currentCount + 1);
 
-        // Save detailed click data with the current counts
         const clickDetailsKey = `clickDetails_${now.toLocaleDateString('en-CA')}_${status}_${testId}`;
         const counts = getCountsForToday();
         localStorage.setItem(clickDetailsKey, JSON.stringify({
@@ -141,7 +139,6 @@
 
         clickDetailsArray.sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
 
-        // Prepare CSV rows with the sum of all tests today (positive, blocked, negative)
         clickDetailsArray.forEach(clickDetails => {
             const counts = getCountsForToday();  // Get updated counts for today
             csvRows.push(`${clickDetails.datetime};${counts.positiveCount + counts.blockedCount + counts.negativeCount};${clickDetails.status};${clickDetails.dlmsValue};${clickDetails.testId};${clickDetails.version_id};${clickDetails.id};${clickDetails.tplan_id};${clickDetails.setting_build}`);
@@ -167,7 +164,7 @@
         if (confirm('Na pewno chcesz usunąć pamięć podręczną? Akcja jest nieodwracalna.')) {
             localStorage.clear();
             alert('Pamięć podręczną została wyczyszczona.');
-            updateTestCountDisplay();  // Update display after clearing
+            updateTestCountDisplay();  
         }
     }
 
@@ -178,9 +175,9 @@
         button.style.bottom = '50px';
         button.style.left = '10px';
         button.style.padding = '10px 20px';
-        button.style.backgroundColor = 'white';  // White background
-        button.style.color = 'black';  // Black text
-        button.style.border = '1px solid #ddd';  // Border
+        button.style.backgroundColor = 'white';  
+        button.style.color = 'green';  
+        button.style.border = '1px solid #ddd';  
         button.style.borderRadius = '5px';
         button.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
         button.style.cursor = 'pointer';
@@ -197,9 +194,9 @@
         button.style.bottom = '10px';
         button.style.left = '10px';
         button.style.padding = '10px 20px';
-        button.style.backgroundColor = 'white';  // White background
-        button.style.color = 'black';  // Black text
-        button.style.border = '1px solid #ddd';  // Border
+        button.style.backgroundColor = 'white';  
+        button.style.color = 'red';  
+        button.style.border = '1px solid #ddd';  
         button.style.borderRadius = '5px';
         button.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
         button.style.cursor = 'pointer';
@@ -212,7 +209,7 @@
     const buttons = document.querySelectorAll('img[id^="fastExec"]');
     buttons.forEach(addCustomAction);
 
-    createTestCountDisplay();  // Create the test count display panel
-    addDownloadButton();       // Add CSV download button
-    addClearButton();          // Add clear local storage button
+    createTestCountDisplay();  
+    addDownloadButton();       
+    addClearButton();          
 })();
