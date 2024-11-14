@@ -156,7 +156,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'wykonania_testow.csv';
+        a.download = 'wykonania_testow' + now.toLocaleDateString('en-CA') + '.csv';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
