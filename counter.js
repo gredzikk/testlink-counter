@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Custom Action on Button Click with Detailed Count and CSV Download
 // @namespace    http://tampermonkey.net/
-// @version      1.18
+// @version      1.19
 // @description  Display detailed count of positive, blocked, and negative tests in the bottom right corner, with CSV download and local storage reset options.
 // @author       You
 // @match        https://testlinkmt.apator.com/lib/execute/execSetResults.php*
